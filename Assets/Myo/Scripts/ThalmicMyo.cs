@@ -4,6 +4,7 @@ using System.Collections;
 using Arm = Thalmic.Myo.Arm;
 using XDirection = Thalmic.Myo.XDirection;
 using VibrationType = Thalmic.Myo.VibrationType;
+using StreamEmgType = Thalmic.Myo.StreamEmgType;
 using Pose = Thalmic.Myo.Pose;
 using UnlockType = Thalmic.Myo.UnlockType;
 
@@ -38,6 +39,12 @@ public class ThalmicMyo : MonoBehaviour {
     // following Unity coordinate system conventions.
     public Vector3 gyroscope;
 
+    // Myo's current rssi reading, representing the RSSI value
+    public sbyte rssi;
+
+    // Myo's current gyroscope reading, representing the 8 emg sensor valuesthe as an array of 8 elements
+    public sbyte[] emg;
+
     // True if and only if this Myo armband has paired successfully, at which point it will provide data and a
     // connection with it will be maintained when possible.
     public bool isPaired {
@@ -47,6 +54,16 @@ public class ThalmicMyo : MonoBehaviour {
     // Vibrate the Myo with the provided type of vibration, e.g. VibrationType.Short or VibrationType.Medium.
     public void Vibrate (VibrationType type) {
         _myo.Vibrate (type);
+    }
+
+    // Request the RSSI of the Myo. An onRssi event will likely be generated with the value of the RSSI.
+    public void RequestRssi () {
+        _myo.RequestRssi ();
+    }
+
+    // Sets the EMG streaming mode for a Myo. 
+    public void SetStreamEmg (StreamEmgType type) {
+        _myo.SetStreamEmg (type);
     }
 
     // Cause the Myo to unlock with the provided type of unlock. e.g. UnlockType.Timed or UnlockType.Hold.
@@ -126,6 +143,18 @@ public class ThalmicMyo : MonoBehaviour {
         }
     }
 
+    void myo_OnRssiData(object sender, Thalmic.Myo.RssiEventArgs e) {
+        lock (_lock) {
+            rssi = e.Rssi;
+        }
+    }
+
+    void myo_OnEmgData(object sender, Thalmic.Myo.EmgEventArgs e) {
+        lock (_lock) {
+            emg = e.Emg;
+        }
+    }
+
     void myo_OnUnlock(object sender, Thalmic.Myo.MyoEventArgs e) {
         lock (_lock) {
             _myoUnlocked = true;
@@ -148,6 +177,8 @@ public class ThalmicMyo : MonoBehaviour {
                 _myo.AccelerometerData -= myo_OnAccelerometerData;
                 _myo.GyroscopeData -= myo_OnGyroscopeData;
                 _myo.PoseChange -= myo_OnPoseChange;
+                _myo.RssiData -= myo_OnRssiData;
+                _myo.EmgData -= myo_OnEmgData;
                 _myo.Unlocked -= myo_OnUnlock;
                 _myo.Locked -= myo_OnLock;
             }
@@ -159,6 +190,8 @@ public class ThalmicMyo : MonoBehaviour {
                 value.AccelerometerData += myo_OnAccelerometerData;
                 value.GyroscopeData += myo_OnGyroscopeData;
                 value.PoseChange += myo_OnPoseChange;
+                value.RssiData += myo_OnRssiData;
+                value.EmgData += myo_OnEmgData;
                 value.Unlocked += myo_OnUnlock;
                 value.Locked += myo_OnLock;
             }

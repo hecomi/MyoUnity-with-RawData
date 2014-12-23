@@ -35,7 +35,9 @@ namespace Thalmic.Myo
 
         public event EventHandler<GyroscopeDataEventArgs> GyroscopeData;
 
-        public event EventHandler<RssiEventArgs> Rssi;
+        public event EventHandler<RssiEventArgs> RssiData;
+
+        public event EventHandler<EmgEventArgs> EmgData;
 
         public event EventHandler<MyoEventArgs> Unlocked;
 
@@ -59,6 +61,11 @@ namespace Thalmic.Myo
         public void RequestRssi()
         {
             libmyo.request_rssi(_handle, IntPtr.Zero);
+        }
+
+        public void SetStreamEmg(StreamEmgType type)
+        {
+            libmyo.set_stream_emg(_handle, (libmyo.StreamEmgType)type, IntPtr.Zero);
         }
 
         public void Unlock(UnlockType type)
@@ -151,18 +158,31 @@ namespace Thalmic.Myo
                     break;
 
                 case libmyo.EventType.Rssi:
-                    if (Rssi != null)
+                    if (RssiData != null)
                     {
                         var rssi = libmyo.event_get_rssi(evt);
-                        Rssi(this, new RssiEventArgs(this, timestamp, rssi));
+                        RssiData(this, new RssiEventArgs(this, timestamp, rssi));
                     }
                     break;
+
+                case libmyo.EventType.Emg:
+                    if (EmgData != null)
+                    {
+                        var emg = new sbyte[8];
+					    for (uint i = 0; i < emg.Length; ++i) {
+                            emg[i] = libmyo.event_get_emg(evt, i);
+                        }
+                        EmgData(this, new EmgEventArgs(this, timestamp, emg));
+                    }
+                    break;
+
                 case libmyo.EventType.Unlocked:
                     if (Unlocked != null)
                     {
                         Unlocked(this, new MyoEventArgs(this, timestamp));
                     }
                     break;
+
                 case libmyo.EventType.Locked:
                     if (Locked != null)
                     {
@@ -192,6 +212,12 @@ namespace Thalmic.Myo
         Short,
         Medium,
         Long
+    }
+
+    public enum StreamEmgType
+    {
+        Disabled,
+        Enabled
     }
 
     public enum UnlockType

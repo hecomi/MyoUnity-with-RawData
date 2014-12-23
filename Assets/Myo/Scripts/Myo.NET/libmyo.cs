@@ -79,6 +79,17 @@ namespace Thalmic.Myo
                    CallingConvention = CallingConvention.Cdecl)]
         public static extern void request_rssi(IntPtr myo, IntPtr error);
 
+        public enum StreamEmgType
+        {
+            Disabled = 0,
+            Enabled = 1
+        }
+
+        [DllImport(MYO_DLL,
+                   EntryPoint = "libmyo_set_stream_emg",
+                   CallingConvention = CallingConvention.Cdecl)]
+        public static extern void set_stream_emg(IntPtr myo, StreamEmgType type, IntPtr error);
+
         public enum PoseType
         {
             Rest = 0,
@@ -128,7 +139,8 @@ namespace Thalmic.Myo
             Pose,
             Rssi,
             Unlocked,
-            Locked
+            Locked,
+            Emg
         }
 
         [DllImport(MYO_DLL,
@@ -212,6 +224,11 @@ namespace Thalmic.Myo
                    EntryPoint = "libmyo_event_get_rssi",
                    CallingConvention = CallingConvention.Cdecl)]
         public static extern sbyte event_get_rssi(IntPtr evt);
+
+        [DllImport(MYO_DLL,
+                   EntryPoint = "libmyo_event_get_emg",
+                   CallingConvention = CallingConvention.Cdecl)]
+        public static extern sbyte event_get_emg(IntPtr evt, uint index);
 
         public enum HandlerResult
         {
